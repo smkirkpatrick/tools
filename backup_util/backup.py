@@ -10,6 +10,23 @@ import re
 import subprocess
 import shutil
 
+local_cleanup_file = None
+remote_test_file = None
+
+def add_file_to_cleanup(file):
+	global local_cleanup_file
+	if local_cleanup_file is None:
+		local_cleanup_file = open('local_cleanup.sh','wx')
+		local_cleanup_file.write('#!/bin/sh\n')
+	local_cleanup_file.write("rm \"{}\";\n".format(file))
+
+def add_remote_file_to_test(file):
+	global remote_test_file
+	if remote_test_file is None:
+		remote_test_file = open('remote_test.sh','wx')
+		remote_test_file.write('#!/bin/sh\n')
+	remote_test_file.write("echo \"{}\";\nopen \"{}\";\nsleep 10;\n".format(file,file))
+
 def check_for_remote_duplicates(movie, movie_file, local_year):
 	server_dup = None
 
@@ -46,21 +63,21 @@ def check_for_remote_duplicates(movie, movie_file, local_year):
 			
 			if local_sha == remote_sha:
 				print "[{}] sha checksum the same [{}], confirmed duplicate of remote server file [{}]. Can remove local copy [{}].".format(movie_file, local_sha, dup, movie)
-				local_cleanup_file.write("rm {};\n".format(movie))
+				add_file_to_cleanup(movie)
+				add_remote_file_to_test(dup)
 				sha_duplicate = True
 				break
 
 	return sha_duplicate
 
 def get_creation_time(path):
-	print "get_creation_time: IN"
 	sub_output_array = subprocess.check_output(["stat", "-f%B", path])
 	create_time_in_secs = filter(bool, sub_output_array.split('\n'))
 	# print "get_creation_time: [{}]".format(str(create_time_in_secs))
 	return datetime.datetime.fromtimestamp(float(create_time_in_secs[0]))
 
 arg_check_dups = True
-arg_backup_type = ".JPG"
+arg_backup_type = ".MOV"
 
 print 'Argument List:', str(sys.argv)
 
@@ -104,22 +121,18 @@ for movie in movies:
 # 	print "[{}] => [{}]".format(movie, movie_info[movie])
 # 	print "[{}] => [{}][{}]".format(movie, movie_info[movie][1], movie_info[movie][len(movie_info[movie])-1])
 
-local_cleanup_file = open('local_cleanup.sh','wx')
-local_cleanup_file.write('#!/bin/sh\n')
-
 server_remote_base = '/Volumes/pictures/MASTER PICTURES'
 for movie in movies:
 	print "Processing [{}]".format(movie)
 
-	get_creation_time(movie)
-	year = get_creation_time(movie).year
-	print "[{}] file year: [{}]".format(movie, year)
-
-	movie_file = movie_info[movie][5]
+	movie_create_time = get_creation_time(movie)
+	year = movie_create_time.year
+	movie_file = movie_info[movie][len(movie_info[movie])-1]
+	print "[{}] file [{}] year: [{}]".format(movie, movie_file, year)
 
 	sys.stdout.flush()
 
-	if arg_check_dups and check_for_remote_duplicates(movie, movie_file, year):
+	if arg_check_dups and check_for_remote_duplicates(movie, movie_file, str(year)):
 		# We're done with this file, move on
 		continue
 
