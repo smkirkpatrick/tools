@@ -136,8 +136,13 @@ for movie in movies:
 		# We're done with this file, move on
 		continue
 
-	remote_dir = server_remote_base + '/' + time.strftime("%Y/%Y%m/%Y%m%d/",time.gmtime(os.path.getmtime(movie)))
+	remote_dir = server_remote_base + '/' + movie_create_time.strftime("%Y/%Y%m/%Y%m%d/")
 	remote_movie = remote_dir + movie_file
+
+	print "[{}] only found locally, backing up to server: [{}]".format(movie, remote_movie)
+	sys.stdout.flush()
+
+	continue
 
 	try:
 		os.makedirs(remote_dir, 0o755)
@@ -146,9 +151,6 @@ for movie in movies:
 			pass
 		else:
 			raise
-
-	print "[{}] only found locally, backing up to server: [{}]".format(movie, remote_movie)
-	sys.stdout.flush()
 
 	shutil.copyfile(movie, remote_movie)
 		
