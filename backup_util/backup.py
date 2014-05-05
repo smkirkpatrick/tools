@@ -27,10 +27,13 @@ def add_remote_file_to_test(file):
 		remote_test_file.write('#!/bin/sh\n')
 	remote_test_file.write("echo \"{}\";\nopen \"{}\";\nsleep 10;\n".format(file,file))
 
-def check_for_remote_duplicates(movie, movie_file, local_year):
+def check_for_remote_duplicates(movie, movie_file, local_year, optimize_search):
 	server_dup = None
 
-	server_search_path = server_remote_base + '/' + local_year
+	server_search_path = server_remote_base
+	if optimize_search:
+		server_search_path += '/' + local_year
+
 	# ^ local_year path extension is an optimization that can cause issues if the local files were copied over in 2013 but created in 2011, for example. The original files in 2011 on the server won't be identified as duplicates because we'd only be checking the 2013 remove path
 
 	try:
@@ -132,7 +135,7 @@ for movie in movies:
 
 	sys.stdout.flush()
 
-	if arg_check_dups and check_for_remote_duplicates(movie, movie_file, str(year)):
+	if arg_check_dups and check_for_remote_duplicates(movie, movie_file, str(year), year >= 2013):
 		# We're done with this file, move on
 		continue
 
@@ -153,7 +156,11 @@ for movie in movies:
 			raise
 
 	shutil.copyfile(movie, remote_movie)
-		
-local_cleanup_file.close()
+
+if local_cleanup_file is not None:
+	local_cleanup_file.close()
+
+if remote_test_file is not None:
+	remote_test_file.close()
 
 print "All Done."
