@@ -1,3 +1,4 @@
 *.log
 local_cleanup.sh
 remote_test*
+archive
