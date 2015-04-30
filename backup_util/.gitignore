@@ -2,3 +2,4 @@
 local_cleanup.sh
 remote_test*
 archive
+corrupt_pairs

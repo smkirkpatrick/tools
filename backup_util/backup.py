@@ -16,6 +16,9 @@ local_cleanup_file_name = 'local_cleanup.sh'
 remote_test_file = None
 remote_test_file_name = 'remote_test.sh'
 
+corrupt_pair_file = None
+corrupt_pair_file_name = 'corrupt_pairs'
+
 def add_file_to_cleanup(file):
 	global local_cleanup_file
 	if local_cleanup_file is None:
@@ -29,6 +32,12 @@ def add_remote_file_to_test(file):
 		remote_test_file = open(remote_test_file_name,'wx')
 		remote_test_file.write('#!/bin/sh\n')
 	remote_test_file.write("echo \"{}\";\nopen \"{}\";\nsleep 10;\n".format(file,file))
+
+def add_corrupt_pair(orig_file, backup_file):
+	global corrupt_pair_file
+	if corrupt_pair_file is None:
+		corrupt_pair_file = open(corrupt_pair_file_name,'wx')
+	corrupt_pair_file.write("\"{}\",\"{}\"\n".format(orig_file, backup_file))
 
 def check_for_remote_duplicates(media_file, media_filename, local_year, optimize_search):
 	server_dup = None
@@ -73,6 +82,8 @@ def check_for_remote_duplicates(media_file, media_filename, local_year, optimize
 				add_remote_file_to_test(dup)
 				sha_duplicate = True
 				break
+			else:
+				add_corrupt_pair(media_file, dup)
 
 	return sha_duplicate
 
@@ -94,8 +105,11 @@ def archive_previous_run_results():
 		archive_file(local_cleanup_file_name)
 	if os.path.isfile(remote_test_file_name):
 		archive_file(remote_test_file_name)
+	if os.path.isfile(corrupt_pair_file_name):
+		archive_file(corrupt_pair_file_name)
 
 arg_check_dups = True
+arg_remote_test = False
 arg_backup_type = ".MOV"
 
 archive_previous_run_results()
@@ -103,9 +117,9 @@ archive_previous_run_results()
 # print 'Argument List:', str(sys.argv)
 
 try:
-	opts, args = getopt.getopt(sys.argv[1:], "ht:", ["help", "type=", "skip-dup-check"])
+	opts, args = getopt.getopt(sys.argv[1:], "ht:", ["help", "type=", "skip-dup-check", "remote-test"])
 except getopt.GetoptError:
-	print 'backup.py [-h] -t <movies|pics|screenshots> [--skip-dup-check]'
+	print 'backup.py [-h] -t <movies|pics|screenshots> [--skip-dup-check] [--remote-test]'
 	sys.exit(2)
 
 # print "getopt opts: [{}]".format(str(opts))
@@ -127,8 +141,14 @@ for opt, arg in opts:
 	elif opt in ("--skip-dup-check"):
 		print "Skipping duplicate remove file check"
 		arg_check_dups = False
+	elif opt in ("--remote-test"):
+		print "Verifying remote file integrity only"
+		arg_remote_test = True
 
-local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters/2013/12/13/20131213-175159'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters/2013/12/23/20131223-181745'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters/2013/12/26/20131226-153244'
+local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters/2013/12/12'
 found_media = subprocess.check_output(["find", local_root_path, "-name", "*{}".format(arg_backup_type), "-print"])
 print "Ran check_output"
 
@@ -137,6 +157,8 @@ media_file_info = {}
 for media_file in media:
 	media_file_info[media_file] = media_file.split('/')
 	print "local media_file file path: [{}]".format(media_file)
+
+exit
 
 # for media_file in media:
 # 	print "[{}] => [{}]".format(media_file, media_file_info[media_file])
@@ -155,6 +177,10 @@ for media_file in media:
 
 	if arg_check_dups and check_for_remote_duplicates(media_file, media_filename, str(year), year >= 2013):
 		# We're done with this file, move on
+		continue
+
+	if arg_remote_test:
+		# We're not doing anything but checking the checksums for local vs remote copies
 		continue
 
 	remote_dir = server_remote_base + '/' + media_file_create_time.strftime("%Y/%Y%m/%Y%m%d/")
@@ -178,5 +204,8 @@ if local_cleanup_file is not None:
 
 if remote_test_file is not None:
 	remote_test_file.close()
+
+if corrupt_pair_file is not None:
+	corrupt_pair_file.close()
 
 print "All Done."
