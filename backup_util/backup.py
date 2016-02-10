@@ -26,12 +26,12 @@ def add_file_to_cleanup(file):
 		local_cleanup_file.write('#!/bin/sh\n')
 	local_cleanup_file.write("rm \"{}\";\n".format(file))
 
-def add_remote_file_to_test(file):
+def add_remote_file_to_test(local_file, remote_file):
 	global remote_test_file
 	if remote_test_file is None:
 		remote_test_file = open(remote_test_file_name,'wx')
 		remote_test_file.write('#!/bin/sh\n')
-	remote_test_file.write("echo \"{}\";\nopen \"{}\";\nsleep 10;\n".format(file,file))
+	remote_test_file.write("echo \"{}\";\nopen \"{}\";\nopen \"{}\";\nsleep 10;\n".format(remote_file,local_file,remote_file))
 
 def add_corrupt_pair(orig_file, backup_file):
 	global corrupt_pair_file
@@ -79,7 +79,7 @@ def check_for_remote_duplicates(media_file, media_filename, local_year, optimize
 			if local_sha == remote_sha:
 				print "[{}] sha checksum the same [{}], confirmed duplicate of remote server file [{}]. Can remove local copy [{}].".format(media_filename, local_sha, dup, media_file)
 				add_file_to_cleanup(media_file)
-				add_remote_file_to_test(dup)
+				add_remote_file_to_test(media_file,dup)
 				sha_duplicate = True
 				break
 			else:
@@ -145,14 +145,21 @@ for opt, arg in opts:
 		print "Verifying remote file integrity only"
 		arg_remote_test = True
 
-# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters/2013/12/13/20131213-175159'
-# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters/2013/12/23/20131223-181745'
-# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters/2013/12/26/20131226-153244'
-local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.photolibrary/Masters/2013/12/12'
-found_media = subprocess.check_output(["find", local_root_path, "-name", "*{}".format(arg_backup_type), "-print"])
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2013/12/13/20131213-175159'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2013/12/23/20131223-181745'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2013/12/26/20131226-153244'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2013/12/12'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2015'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/Photos Library.photoslibrary/Masters/2015'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/Photos Library.photoslibrary/Masters'
+local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2014'
+
+found_media1 = subprocess.check_output(["find", local_root_path, "-name", "*{}".format(arg_backup_type), "-print"])
+found_media2 = subprocess.check_output(["find", local_root_path, "-name", "*{}".format(arg_backup_type.lower()), "-print"])
 print "Ran check_output"
 
-media = filter(bool, found_media.split('\n'))
+media = filter(bool, found_media1.split('\n'))
+media.extend(filter(bool, found_media2.split('\n')))
 media_file_info = {}
 for media_file in media:
 	media_file_info[media_file] = media_file.split('/')
