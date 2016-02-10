@@ -171,7 +171,7 @@ exit
 # 	print "[{}] => [{}]".format(media_file, media_file_info[media_file])
 # 	print "[{}] => [{}][{}]".format(media_file, media_file_info[media_file][1], media_file_info[media_file][len(media_file_info[media_file])-1])
 
-server_remote_base = '/Volumes/pictures/MASTER PICTURES'
+server_remote_base = '/Volumes/pictures/sean-backup'
 for media_file in media:
 	print "Processing [{}]".format(media_file)
 
