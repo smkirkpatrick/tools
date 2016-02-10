@@ -151,8 +151,8 @@ for opt, arg in opts:
 # local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2013/12/12'
 # local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2015'
 # local_root_path = '/Users/seanmkirkpatrick/Pictures/Photos Library.photoslibrary/Masters/2015'
-# local_root_path = '/Users/seanmkirkpatrick/Pictures/Photos Library.photoslibrary/Masters'
-local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2014'
+local_root_path = '/Users/seanmkirkpatrick/Pictures/Photos Library.photoslibrary/Masters'
+# local_root_path = '/Users/seanmkirkpatrick/Pictures/iPhoto Library.migratedphotolibrary/Masters/2014'
 
 found_media1 = subprocess.check_output(["find", local_root_path, "-name", "*{}".format(arg_backup_type), "-print"])
 found_media2 = subprocess.check_output(["find", local_root_path, "-name", "*{}".format(arg_backup_type.lower()), "-print"])
