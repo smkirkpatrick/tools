@@ -31,7 +31,7 @@ def add_remote_file_to_test(local_file, remote_file):
 	if remote_test_file is None:
 		remote_test_file = open(remote_test_file_name,'wx')
 		remote_test_file.write('#!/bin/sh\n')
-	remote_test_file.write("echo \"{}\";\nopen \"{}\";\nopen \"{}\";\nsleep 10;\n".format(remote_file,local_file,remote_file))
+	remote_test_file.write("echo \"{}\";\necho \"{}\";\nopen \"{}\";\nsleep 10;\n".format(remote_file,local_file,remote_file))
 
 def add_corrupt_pair(orig_file, backup_file):
 	global corrupt_pair_file
